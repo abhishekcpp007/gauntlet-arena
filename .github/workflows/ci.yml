@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      # the other Gauntlet pieces are sibling projects, pulled in as path dependencies
+      - run: |
+          for piece in sandbox repo2env timemachine cheatcatcher; do
+            git clone --depth 1 "https://github.com/abhishekcpp007/gauntlet-$piece" "../$piece"
+          done
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: uv sync
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: docker pull python:3.12-slim
+      - run: uv run pytest -v

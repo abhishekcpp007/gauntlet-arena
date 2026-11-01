@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+dist/
+.pytest_cache/
+.ruff_cache/
+trajectories/
+*.jsonl
+*.db
+arena-data/

@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gauntlet Arena</title>
+<style>
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --panel-2: #f0f2f5; --ink: #16181d; --muted: #5d6573;
+  --line: #dde1e7; --accent: #5b4ce0; --accent-ink: #ffffff; --ok: #12805c; --ok-bg: #e3f5ed;
+  --bad: #c02b3c; --bad-bg: #fbe7ea; --warn: #9a6100; --warn-bg: #fdf1dc; --term: #0f1115; --term-ink: #d7dce5;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d0f13; --panel: #151820; --panel-2: #1c2029; --ink: #e8ebf1; --muted: #98a1b2;
+    --line: #2a2f3a; --accent: #8b7dff; --accent-ink: #0d0f13; --ok: #4fd1a1; --ok-bg: #12352a;
+    --bad: #ff7a8a; --bad-bg: #3b1820; --warn: #f5b84a; --warn-bg: #3a2a10; --term: #090a0d; --term-ink: #d7dce5;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { display: flex; align-items: center; gap: 24px; padding: 14px 24px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 5; }
+header h1 { font-size: 18px; margin: 0; letter-spacing: .2px; }
+header h1 span { color: var(--accent); }
+nav { display: flex; gap: 4px; }
+nav a { color: var(--muted); text-decoration: none; padding: 6px 12px; border-radius: 8px; font-weight: 500; }
+nav a.on, nav a:hover { color: var(--ink); background: var(--panel-2); }
+main { padding: 24px; max-width: 1500px; margin: 0 auto; }
+h2 { font-size: 20px; margin: 0 0 4px; }
+.sub { color: var(--muted); margin: 0 0 20px; }
+.grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.task { cursor: pointer; transition: border-color .15s; }
+.task.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.task h3 { font-size: 15px; margin: 0 0 4px; }
+.meta { color: var(--muted); font-size: 13px; font-family: var(--mono); word-break: break-all; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 20px; }
+.chip { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 7px 14px; cursor: pointer; font: inherit; color: var(--ink); }
+.chip.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.chip small { opacity: .75; }
+button.go { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 10px; padding: 10px 20px; font: inherit; font-weight: 600; cursor: pointer; }
+button.go:disabled { opacity: .45; cursor: not-allowed; }
+button.ghost { background: transparent; border: 1px solid var(--line); color: var(--ink); border-radius: 8px; padding: 6px 12px; font: inherit; cursor: pointer; }
+.section { margin-top: 28px; }
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--panel-2); color: var(--muted); }
+.pill.ok { background: var(--ok-bg); color: var(--ok); } .pill.bad { background: var(--bad-bg); color: var(--bad); }
+.pill.warn { background: var(--warn-bg); color: var(--warn); } .pill.live { background: var(--accent); color: var(--accent-ink); }
+.problem { white-space: pre-wrap; font-family: var(--mono); font-size: 13px; background: var(--panel-2); border-radius: 8px; padding: 10px 12px; margin: 8px 0 0; max-height: 160px; overflow: auto; }
+.banner { margin: 16px 0; padding: 14px 16px; border-radius: 12px; font-weight: 600; font-size: 16px; }
+.banner.win { background: var(--ok-bg); color: var(--ok); } .banner.none { background: var(--panel-2); color: var(--muted); }
+.lanes { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); margin-top: 16px; }
+.lane { display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; min-height: 420px; }
+.lane.winner { border-color: var(--ok); box-shadow: 0 0 0 1px var(--ok); }
+.lane-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.lane-head b { font-size: 16px; } .lane-head .stat { margin-left: auto; color: var(--muted); font-size: 13px; font-family: var(--mono); }
+.feed { flex: 1; background: var(--term); color: var(--term-ink); font: 12.5px/1.5 var(--mono); padding: 10px 12px; overflow-y: auto; max-height: 460px; }
+.feed .cmd { color: #9ad1ff; } .feed .cmd::before { content: "$ "; color: #6c7686; }
+.feed .file { color: #c9b6ff; } .feed .note { color: #f2d48f; font-family: system-ui, sans-serif; font-size: 13px; margin: 6px 0; }
+.feed pre { margin: 2px 0 8px; white-space: pre-wrap; word-break: break-word; color: #aab3c2; max-height: 220px; overflow: auto; }
+.feed .x { font-size: 11px; padding: 0 6px; border-radius: 4px; margin-left: 6px; } .feed .x.ok { background: #12352a; color: #4fd1a1; } .feed .x.bad { background: #3b1820; color: #ff7a8a; }
+.result { padding: 12px 14px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+.result .big { font-size: 15px; font-weight: 700; }
+.finding { font-size: 13px; padding: 6px 10px; border-radius: 8px; background: var(--panel-2); }
+.finding b { text-transform: uppercase; font-size: 11px; margin-right: 6px; }
+.human { padding: 10px 14px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+.human input, .human textarea { width: 100%; font: 13px var(--mono); background: var(--panel-2); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.human textarea { min-height: 180px; resize: vertical; }
+.row { display: flex; gap: 8px; align-items: center; }
+table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); background: var(--panel-2); }
+tr:last-child td { border-bottom: 0; }
+.bar { height: 8px; border-radius: 4px; background: var(--panel-2); overflow: hidden; width: 120px; display: inline-block; vertical-align: middle; margin-right: 8px; }
+.bar i { display: block; height: 100%; background: var(--accent); }
+a { color: var(--accent); }
+details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+.empty { color: var(--muted); padding: 20px; text-align: center; }
+.err { color: var(--bad); font-size: 13px; }
+@media (max-width: 640px) { main { padding: 16px; } header { padding: 12px 16px; gap: 12px; flex-wrap: wrap; } .lanes { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Gauntlet <span>Arena</span></h1>
+  <nav>
+    <a href="#/" data-v="new">New match</a>
+    <a href="#/matches" data-v="matches">Matches</a>
+    <a href="#/leaderboard" data-v="leaderboard">Leaderboard</a>
+  </nav>
+</header>
+<main id="app"></main>
+<script>
+const app = document.getElementById("app");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let pollTimer = null;
+
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+
+async function api(path, opts = {}) {
+  const key = store("gauntlet-key");
+  const headers = {"content-type": "application/json", ...(key ? {authorization: "Bearer " + key} : {})};
+  const res = await fetch("/api" + path, {...opts, headers});
+  if (res.status === 401) {
+    const k = prompt("This arena needs an API key");
+    if (k) { store("gauntlet-key", k); return api(path, opts); }
+  }
+  const body = res.headers.get("content-type")?.includes("json") ? await res.json() : await res.text();
+  if (!res.ok) throw new Error(body.detail || body || res.statusText);
+  return body;
+}
+
+function keyQuery() { const k = store("gauntlet-key"); return k ? "?key=" + encodeURIComponent(k) : ""; }
+function fmtSecs(s) { if (s == null) return ""; s = Math.round(s); return s < 60 ? s + "s" : Math.floor(s / 60) + "m " + (s % 60) + "s"; }
+function setNav(v) { document.querySelectorAll("nav a").forEach(a => a.classList.toggle("on", a.dataset.v === v)); }
+
+// ------------------------------------------------------------------ new match
+async function viewNew() {
+  setNav("new");
+  app.innerHTML = `<h2>Start a match</h2><p class="sub">Pick a task mined from a real repo's history, then pick who races.</p><div id="tasks" class="grid"><div class="empty">loading tasks...</div></div>
+  <div class="section"><h2>Contestants</h2><div id="who" class="chips"></div><button class="go" id="start" disabled>Start match</button> <span id="msg" class="err"></span></div>`;
+  const [tasks, who] = await Promise.all([api("/tasks"), api("/contestants")]);
+  let picked = null; const chosen = new Set(["oracle"].filter(n => who.some(w => w.name === n)));
+  const tasksEl = document.getElementById("tasks");
+  tasksEl.innerHTML = tasks.length ? tasks.map(t => `<div class="card task" data-id="${esc(t.id)}"><h3>${esc(t.title)}</h3>
+    <div class="meta">${esc(t.id)}</div><div style="margin-top:8px"><span class="pill">${t.fail_to_pass} to fix</span> <span class="pill">${t.pass_to_pass} to keep passing</span></div></div>`).join("")
+    : `<div class="empty">No tasks loaded. Start the server with <code>--tasks file.jsonl</code>.</div>`;
+  const refresh = () => {
+    tasksEl.querySelectorAll(".task").forEach(el => el.classList.toggle("on", el.dataset.id === picked));
+    document.querySelectorAll("#who .chip").forEach(el => el.classList.toggle("on", chosen.has(el.dataset.n)));
+    document.getElementById("start").disabled = !picked || !chosen.size;
+  };
+  tasksEl.onclick = e => { const c = e.target.closest(".task"); if (c) { picked = c.dataset.id; refresh(); } };
+  const whoEl = document.getElementById("who");
+  whoEl.innerHTML = who.map(w => `<button class="chip" data-n="${esc(w.name)}" title="${esc(w.description)}">${esc(w.name)} <small>${esc(w.description.split(".")[0])}</small></button>`).join("");
+  whoEl.onclick = e => { const c = e.target.closest(".chip"); if (!c) return; chosen.has(c.dataset.n) ? chosen.delete(c.dataset.n) : chosen.add(c.dataset.n); refresh(); };
+  document.getElementById("start").onclick = async () => {
+    try { const m = await api("/matches", {method: "POST", body: JSON.stringify({task_id: picked, contestants: [...chosen]})}); location.hash = "#/match/" + m.id; }
+    catch (err) { document.getElementById("msg").textContent = err.message; }
+  };
+  if (tasks.length === 1) picked = tasks[0].id;
+  refresh();
+}
+
+// ------------------------------------------------------------------ match view
+function stepHtml(s) {
+  if (s.type === "exec") {
+    const badge = s.timed_out ? `<span class="x bad">timeout</span>` : `<span class="x ${s.exit_code === 0 ? "ok" : "bad"}">${s.exit_code}</span>`;
+    return `<div class="cmd">${esc(s.command)}${badge}</div>${s.output ? `<pre>${esc(s.output)}</pre>` : ""}`;
+  }
+  if (s.type === "write_file") return `<div class="file">wrote ${esc(s.path)} (${s.size} bytes)</div>`;
+  if (s.type === "read_file") return `<div class="file">read ${esc(s.path)}${s.ok === false ? " (missing)" : ""}</div>`;
+  return `<div class="file">${esc(s.type)}</div>`;
+}
+
+function stateLabel(e) {
+  const map = {queued: ["queued", ""], running: ["running", "live"], your_turn: ["your turn", "live"], grading: ["grading", "warn"], error: ["error", "bad"]};
+  if (e.state === "done") return e.result.counted ? `<span class="pill ok">solved</span>` : `<span class="pill bad">not solved</span>`;
+  const [t, c] = map[e.state] || [e.state, ""];
+  return `<span class="pill ${c}">${t}</span>`;
+}
+
+function resultHtml(matchId, e) {
+  if (e.error) return `<div class="result"><div class="err">${esc(e.error)}</div></div>`;
+  const r = e.result; if (!r) return "";
+  const verdictCls = {clean: "ok", suspicious: "warn", cheating: "bad"}[r.verdict];
+  const f2p = Object.entries(r.fail_to_pass || {});
+  const fixed = f2p.filter(([, ok]) => ok).length;
+  let html = `<div class="result"><div class="big">${r.resolved ? "Hidden tests pass" : "Hidden tests fail"} <span class="pill ${verdictCls}">${esc(r.verdict)}</span></div>
+    <div class="meta">${fixed}/${f2p.length} target tests fixed${r.pass_to_pass_broken.length ? `, ${r.pass_to_pass_broken.length} regressions` : ""}, ${r.patch_lines} line diff</div>`;
+  if (r.resolved && !r.counted) html += `<div class="err">Tests went green, but the run was flagged as cheating, so it doesn't count.</div>`;
+  if (r.ignored_files && r.ignored_files.length) html += `<div class="meta">grader ignored edits to: ${esc(r.ignored_files.join(", "))}</div>`;
+  if (r.grading_error) html += `<div class="err">${esc(r.grading_error)}</div>`;
+  html += r.findings.slice(0, 6).map(f => `<div class="finding"><b class="${{high: "err", medium: "", low: ""}[f.severity]}">${esc(f.severity)}</b>${esc(f.message)}</div>`).join("");
+  html += `<div class="row"><a target="_blank" href="/api/matches/${matchId}/${encodeURIComponent(e.name)}/replay${keyQuery()}">Replay in Time Machine</a></div>`;
+  if (r.patch) html += `<details><summary>patch</summary><pre class="problem">${esc(r.patch)}</pre></details>`;
+  return html + `</div>`;
+}
+
+function humanPanel(matchId) {
+  return `<div class="human"><form class="row" data-act="exec"><input name="cmd" placeholder="run a command in your sandbox, like: python -m pytest -q" autocomplete="off"></form>
+    <div class="row"><input name="path" placeholder="file path, like src/pkg/module.py"><button class="ghost" data-act="load">Open</button><button class="ghost" data-act="save">Save</button></div>
+    <textarea name="body" spellcheck="false" placeholder="open a file to edit it here"></textarea>
+    <div class="row"><button class="go" data-act="submit">Submit my fix</button><span class="err" data-msg></span></div></div>`;
+}
+
+async function viewMatch(id) {
+  setNav("matches");
+  const seen = {}, counts = {}; let built = false;
+  const tick = async () => {
+    let m;
+    try { m = await api(`/matches/${id}?since=` + Object.entries(seen).map(([k, v]) => `${encodeURIComponent(k)}:${v}`).join(",")); }
+    catch (err) { app.innerHTML = `<div class="empty">${esc(err.message)}</div>`; return; }
+    if (!built) {
+      app.innerHTML = `<h2>${esc(m.task.problem.split("\n")[0])}</h2><div class="meta">${esc(m.task.id)} · ${esc(m.task.repo)}</div>
+        <div class="problem">${esc(m.task.problem)}</div><div id="banner"></div>
+        <div class="lanes">${m.entries.map(e => `<div class="lane" id="lane-${esc(e.name)}"><div class="lane-head"><b>${esc(e.name)}</b><span data-state></span><span class="stat" data-stat></span></div>
+        <div class="feed" data-feed></div><div data-notes></div><div data-result></div>${e.name === "human" ? humanPanel(id) : ""}</div>`).join("")}</div>`;
+      wireHuman(id);
+      built = true;
+    }
+    for (const e of m.entries) {
+      const lane = document.getElementById("lane-" + e.name); if (!lane) continue;
+      const feed = lane.querySelector("[data-feed]");
+      const stick = feed.scrollTop + feed.clientHeight >= feed.scrollHeight - 30;
+      if (e.new_steps.length) { feed.insertAdjacentHTML("beforeend", e.new_steps.map(stepHtml).join("")); seen[e.name] = e.new_steps[e.new_steps.length - 1].i + 1; counts[e.name] = (counts[e.name] || 0) + e.new_steps.length; }
+      const notesKey = e.notes.join("\u0000");
+      if (lane.dataset.notes !== notesKey) {
+        lane.dataset.notes = notesKey;
+        const shown = Number(lane.dataset.shownNotes || 0);
+        if (e.notes.length > shown) feed.insertAdjacentHTML("beforeend", e.notes.slice(shown).map(n => `<div class="note">${esc(n)}</div>`).join(""));
+        lane.dataset.shownNotes = e.notes.length;
+      }
+      if (stick) feed.scrollTop = feed.scrollHeight;
+      lane.querySelector("[data-state]").innerHTML = stateLabel(e);
+      lane.querySelector("[data-stat]").textContent = `${fmtSecs(e.seconds)} · ${counts[e.name] || 0} steps`;
+      const resEl = lane.querySelector("[data-result]");
+      if ((e.result || e.error) && !resEl.dataset.done) { resEl.innerHTML = resultHtml(id, e); resEl.dataset.done = "1"; const hp = lane.querySelector(".human"); if (hp) hp.remove(); }
+      lane.classList.toggle("winner", m.winner === e.name);
+    }
+    document.getElementById("banner").innerHTML = m.done
+      ? (m.winner ? `<div class="banner win">${esc(m.winner)} wins</div>` : `<div class="banner none">Nobody solved it</div>`) : "";
+    if (!m.done) pollTimer = setTimeout(tick, 1000);
+  };
+  tick();
+}
+
+function wireHuman(id) {
+  const lane = document.getElementById("lane-human"); if (!lane) return;
+  const msg = lane.querySelector("[data-msg]");
+  const q = n => lane.querySelector(`[name=${n}]`);
+  const run = async fn => { msg.textContent = ""; try { await fn(); } catch (err) { msg.textContent = err.message; } };
+  lane.querySelector("form").onsubmit = ev => { ev.preventDefault(); const c = q("cmd").value.trim(); if (!c) return; q("cmd").value = "";
+    run(() => api(`/matches/${id}/human/exec`, {method: "POST", body: JSON.stringify({command: c})})); };
+  lane.addEventListener("click", ev => {
+    const act = ev.target.dataset?.act; if (!act) return;
+    if (act === "load") run(async () => { q("body").value = (await api(`/matches/${id}/human/file?path=` + encodeURIComponent(q("path").value))).content; });
+    if (act === "save") run(async () => { await api(`/matches/${id}/human/file`, {method: "PUT", body: JSON.stringify({path: q("path").value, content: q("body").value})}); msg.textContent = "saved"; });
+    if (act === "submit") run(async () => { await api(`/matches/${id}/human/submit`, {method: "POST"}); msg.textContent = "submitted, grading..."; });
+  });
+}
+
+// ------------------------------------------------------------------ lists
+async function viewMatches() {
+  setNav("matches");
+  const rows = await api("/matches");
+  app.innerHTML = `<h2>Matches</h2><p class="sub">Every match since this server started.</p>` + (rows.length
+    ? `<table><tr><th>Task</th><th>Contestants</th><th>Status</th><th>Winner</th></tr>${rows.map(r => `<tr><td><a href="#/match/${r.id}">${esc(r.task)}</a></td><td>${esc(r.contestants.join(", "))}</td>
+      <td>${r.done ? `<span class="pill">finished</span>` : `<span class="pill live">live</span>`}</td><td>${esc(r.winner || "")}</td></tr>`).join("")}</table>`
+    : `<div class="empty">No matches yet. <a href="#/">Start one</a>.</div>`);
+}
+
+async function viewLeaderboard() {
+  setNav("leaderboard");
+  const rows = await api("/leaderboard");
+  app.innerHTML = `<h2>Leaderboard</h2><p class="sub">A solve counts when the hidden tests pass and Cheat Catcher doesn't flag the run as cheating.</p>` + (rows.length
+    ? `<table><tr><th>#</th><th>Contestant</th><th>Solve rate</th><th>Solved</th><th>Attempts</th><th>Caught cheating</th><th>Avg solve time</th></tr>${rows.map((r, i) => `<tr><td>${i + 1}</td><td><b>${esc(r.contestant)}</b></td>
+      <td><span class="bar"><i style="width:${Math.round(r.solve_rate * 100)}%"></i></span>${Math.round(r.solve_rate * 100)}%</td><td>${r.solved}</td><td>${r.attempts}</td>
+      <td>${r.caught_cheating ? `<span class="pill bad">${r.caught_cheating}</span>` : "0"}</td><td>${fmtSecs(r.avg_solve_seconds) || "-"}</td></tr>`).join("")}</table>`
+    : `<div class="empty">No finished attempts yet.</div>`);
+}
+
+function route() {
+  clearTimeout(pollTimer);
+  const h = location.hash.replace(/^#/, "") || "/";
+  const m = h.match(/^\/match\/(\w+)/);
+  const go = m ? viewMatch(m[1]) : h === "/matches" ? viewMatches() : h === "/leaderboard" ? viewLeaderboard() : viewNew();
+  Promise.resolve(go).catch(err => { app.innerHTML = `<div class="empty">${esc(err.message)}</div>`; });
+}
+addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>

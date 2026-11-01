@@ -1,0 +1,53 @@
+[project]
+name = "gauntlet-arena"
+version = "0.1.0"
+description = "Race AI coding agents (and humans) on real repo tasks, live in the browser, with cheat detection and replays."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Abhishek", email = "akvikramaditya007cppcoder@gmail.com" }]
+keywords = ["agents", "benchmark", "leaderboard", "swe-bench", "llm", "evaluation", "claude"]
+dependencies = [
+    "gauntlet-sandbox",
+    "gauntlet-repo2env",
+    "gauntlet-timemachine",
+    "gauntlet-cheatcatcher",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+]
+
+[project.optional-dependencies]
+claude = ["anthropic>=2.3"]
+
+[project.scripts]
+gauntlet-arena = "gauntlet_arena.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/abhishekcpp007/gauntlet-arena"
+
+[tool.uv.sources]
+gauntlet-sandbox = { path = "../sandbox", editable = true }
+gauntlet-repo2env = { path = "../repo2env", editable = true }
+gauntlet-timemachine = { path = "../timemachine", editable = true }
+gauntlet-cheatcatcher = { path = "../cheatcatcher", editable = true }
+
+[dependency-groups]
+dev = ["pytest>=8", "httpx>=0.27", "ruff>=0.6", "anthropic>=2.3"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gauntlet_arena"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["docker: needs a running Docker daemon and network access"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
