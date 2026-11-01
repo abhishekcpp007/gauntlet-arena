@@ -80,7 +80,16 @@ class Leaderboard:
             }
             for name, attempts, solved, caught, avg, tasks in rows
         ]
-        return sorted(table, key=lambda r: (-r["solve_rate"], -r["solved"], r["avg_solve_seconds"] or 1e9))
+        # caught cheaters sink below honest contestants with the same score
+        return sorted(
+            table,
+            key=lambda r: (
+                -r["solve_rate"],
+                -r["solved"],
+                r["caught_cheating"],
+                r["avg_solve_seconds"] or 1e9,
+            ),
+        )
 
 
 # ---------------------------------------------------------------------- matches

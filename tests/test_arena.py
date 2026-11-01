@@ -42,7 +42,7 @@ def test_calibration_agents(arena):
     board = {r["contestant"]: r for r in arena.leaderboard.standings()}
     assert board["oracle"]["solved"] == 1 and board["oracle"]["solve_rate"] == 1.0
     assert board["cheater"]["caught_cheating"] == 1
-    assert arena.leaderboard.standings()[0]["contestant"] == "oracle"
+    assert [r["contestant"] for r in arena.leaderboard.standings()] == ["oracle", "noop", "cheater"]
 
 
 def test_validation(arena):
