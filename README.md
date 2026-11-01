@@ -9,6 +9,8 @@ gauntlet-arena serve --tasks pallets__itsdangerous.tasks.jsonl
 # open http://127.0.0.1:8080
 ```
 
+![A live match on a real itsdangerous task](docs/arena-match.png)
+
 Pick a task, pick contestants, hit start. Each one gets its own locked-down sandbox at the commit right before the fix, with none of the hidden tests in sight. When they're done, their diff gets graded, their run gets scanned for cheating, and the leaderboard updates.
 
 ## Contestants
