@@ -90,6 +90,7 @@ def test_http_human_vs_noop(arena):
         assert human["result"]["counted"] and human["result"]["verdict"] == "clean"
         # the polling cursor only returns steps the client hasn't seen
         assert human["new_steps"]
+        assert not any("git diff --cached" in st.get("command", "") for st in human["new_steps"])
         again = client.get(
             f"/api/matches/{mid}", params={"since": f"human:{human['new_steps'][-1]['i'] + 1}"}
         ).json()

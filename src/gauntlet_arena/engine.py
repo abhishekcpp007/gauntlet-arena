@@ -223,14 +223,17 @@ class Arena:
         entries = []
         for e in match.entries.values():
             steps = e.trajectory.steps if e.trajectory else []
-            start = max(since.get(e.name, 0), e.agent_steps[0])
+            # once the agent is done, stop at its last step so our diff command stays hidden
+            first, last = e.agent_steps
+            end = last if e.state in ("grading", "done") and last >= first else len(steps)
+            start = max(since.get(e.name, 0), first)
             entries.append(
                 {
                     "name": e.name,
                     "state": e.state,
                     "seconds": e.seconds,
                     "steps": len(steps),
-                    "new_steps": [summarize_step(s) for s in steps[start:]],
+                    "new_steps": [summarize_step(s) for s in steps[start:end]],
                     "notes": e.notes[-50:],
                     "result": e.result,
                     "error": e.error,
