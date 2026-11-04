@@ -8,10 +8,10 @@ license = "MIT"
 authors = [{ name = "Abhishek", email = "akvikramaditya007cppcoder@gmail.com" }]
 keywords = ["agents", "benchmark", "leaderboard", "swe-bench", "llm", "evaluation", "claude"]
 dependencies = [
-    "gauntlet-sandbox",
-    "gauntlet-repo2env",
-    "gauntlet-timemachine",
-    "gauntlet-cheatcatcher",
+    "gauntlet-sandbox @ git+https://github.com/abhishekcpp007/gauntlet-sandbox",
+    "gauntlet-repo2env @ git+https://github.com/abhishekcpp007/gauntlet-repo2env",
+    "gauntlet-timemachine @ git+https://github.com/abhishekcpp007/gauntlet-timemachine",
+    "gauntlet-cheatcatcher @ git+https://github.com/abhishekcpp007/gauntlet-cheatcatcher",
     "fastapi>=0.110",
     "uvicorn>=0.29",
 ]
@@ -25,18 +25,15 @@ gauntlet-arena = "gauntlet_arena.cli:main"
 [project.urls]
 Homepage = "https://github.com/abhishekcpp007/gauntlet-arena"
 
-[tool.uv.sources]
-gauntlet-sandbox = { path = "../sandbox", editable = true }
-gauntlet-repo2env = { path = "../repo2env", editable = true }
-gauntlet-timemachine = { path = "../timemachine", editable = true }
-gauntlet-cheatcatcher = { path = "../cheatcatcher", editable = true }
-
 [dependency-groups]
 dev = ["pytest>=8", "httpx>=0.27", "ruff>=0.6", "anthropic>=2.3"]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/gauntlet_arena"]
